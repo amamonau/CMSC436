@@ -29,18 +29,17 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowLongClickListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowLongClickListener, GoogleMap.OnMarkerDragListener {
 
     private GoogleMap mMap;
 
     private static final int REQUEST_FINE_LOCATION = 0;
-
     // Predefined locations
     private static final LatLng LOONEYS = new LatLng(38.9909013,-76.9342696);
     private static final LatLng BOARDANBREW = new LatLng(38.9915366,-76.9337273);
     private static final LatLng KIM = new LatLng(38.9910548,-76.938171);
     private static final LatLng CSIC_LOC = new LatLng(38.9899745,-76.9370508);
-    //private static final LatLng STAMP = new LatLng(38.9880831,-76.9447758);
+    private static final LatLng STAMP = new LatLng(38.9880831,-76.9447758);
 
     // new camera position
     private static final CameraPosition CSIC =
@@ -51,9 +50,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                         .build();
 
 
-    // using ArrayList to
+    // using ArrayList to store marker options
     ArrayList <MarkerOptions> mMarkerOptions = new ArrayList <MarkerOptions> ();
-    private int index = 0;
+
+    private static int num = 0;
 
 
     @Override
@@ -95,8 +95,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         setUpFABListener(mMap);
         mMap.setOnInfoWindowLongClickListener(this);
+        mMap.setOnMarkerDragListener(this);
         // creating marker options
         createMarkerOptions();
+        addMarkers();
         // move camera to CSIC building
         mMap.moveCamera(CameraUpdateFactory.newCameraPosition(CSIC));
     }
@@ -136,21 +138,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         FloatingActionButton myFab = (FloatingActionButton) findViewById(R.id.addMarker);
         myFab.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                switch (index) {
-                    case 0:
-                        // adding marker to the map
-                        mMap.addMarker(mMarkerOptions.get(index));
-                        break;
-                    case 1:
-                        mMap.addMarker(mMarkerOptions.get(index));
-                        break;
-                    case 2:
-                        mMap.addMarker(mMarkerOptions.get(index));
-                        break;
-                    default:
-                        break;
-                }
-                index++;
+                LatLng pos = mMap.getCameraPosition().target;
+                mMap.addMarker(new MarkerOptions().position(pos).title("Marker #" + num++).draggable(true));
             }
         });
     }
@@ -161,32 +150,55 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         marker.showInfoWindow();
         LatLng l = marker.getPosition();
 
-
-        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(l)
-                .zoom(15.5f)
-                .bearing(0.0f)
-                .tilt(0.0f)
-                .build()));
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                new CameraPosition.Builder().target(l)
+                    .zoom(15.5f)
+                    .bearing(0.0f)
+                    .tilt(0.0f)
+                    .build()));
         return false;
     }
 
     @Override
     public void onInfoWindowLongClick (Marker marker) {
         LatLng point = marker.getPosition();
-        Toast.makeText(this, "Info window clicked",
+        Toast.makeText(this, "Launching Directions",
                 Toast.LENGTH_SHORT).show();
         Uri gmmIntentUri = Uri.parse("google.navigation:q="+point.latitude+","+point.longitude);
         Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
         mapIntent.setPackage("com.google.android.apps.maps");
         startActivity(mapIntent);
+    }
 
+    @Override
+    public void onMarkerDragStart(Marker marker){
+
+    }
+
+    @Override
+    public void onMarkerDrag(Marker marker){
+
+    }
+
+    @Override
+    public void onMarkerDragEnd(Marker marker){
+        LatLng l = marker.getPosition();
+        Toast.makeText(this, l.toString(),
+                Toast.LENGTH_SHORT).show();
     }
 
     private void createMarkerOptions() {
         mMarkerOptions.add(new MarkerOptions().position(LOONEYS).title("Looney's").snippet("Not bad for College Park"));
         mMarkerOptions.add(new MarkerOptions().position(BOARDANBREW).title("The Board and Brew").snippet("Great coffee. OK food. Too many nerds.").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
         mMarkerOptions.add(new MarkerOptions().position(KIM).title("Jeong H. Kim Engineering Bldg").snippet("Too many bionerds. Not enough classrooms. Lots of air!").icon(BitmapDescriptorFactory.fromResource(R.drawable.rocket)));
-        //mMarkerOptions.add(new MarkerOptions().position(STAMP).title("Adele H. Stamp Student Union").snippet("Not bad for College Park"));
+        mMarkerOptions.add(new MarkerOptions().position(STAMP).title("Adele H. Stamp Student Union").snippet("Not bad for College Park"));
+    }
+
+    private void addMarkers() {
+        // adding marker to the map
+        for (int i = 0; i < 4; i++) {
+            mMap.addMarker(mMarkerOptions.get(i));
+        }
     }
 
 }
