@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -28,7 +29,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowLongClickListener {
 
     private GoogleMap mMap;
 
@@ -93,7 +94,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mUiSettings.setMapToolbarEnabled(false);
 
         setUpFABListener(mMap);
-
+        mMap.setOnInfoWindowLongClickListener(this);
         // creating marker options
         createMarkerOptions();
         // move camera to CSIC building
@@ -146,18 +147,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     case 2:
                         mMap.addMarker(mMarkerOptions.get(index));
                         break;
-                    case 3:
-                        // using intent to launch navigation at Google Maps
-                        Uri gmmIntentUri = Uri.parse("google.navigation:q=38.9915366,-76.9337273");
-                        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                        mapIntent.setPackage("com.google.android.apps.maps");
-                        startActivity(mapIntent);
                     default:
                         break;
                 }
                 index++;
             }
         });
+    }
+
+
+    @Override
+    public boolean onMarkerClick(final Marker marker) {
+        marker.showInfoWindow();
+        LatLng l = marker.getPosition();
+
+
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(l)
+                .zoom(15.5f)
+                .bearing(0.0f)
+                .tilt(0.0f)
+                .build()));
+        return false;
+    }
+
+    @Override
+    public void onInfoWindowLongClick (Marker marker) {
+        LatLng point = marker.getPosition();
+        Toast.makeText(this, "Info window clicked",
+                Toast.LENGTH_SHORT).show();
+        Uri gmmIntentUri = Uri.parse("google.navigation:q="+point.latitude+","+point.longitude);
+        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+        mapIntent.setPackage("com.google.android.apps.maps");
+        startActivity(mapIntent);
+
     }
 
     private void createMarkerOptions() {
